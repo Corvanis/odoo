@@ -89,6 +89,7 @@ class AccountMoveSend(models.AbstractModel):
                 'mail_body': get_setting('mail_body', default_value=self._get_default_mail_body(move, mail_template, mail_lang)),
                 'mail_subject': get_setting('mail_subject', default_value=self._get_default_mail_subject(move, mail_template, mail_lang)),
                 'mail_partner_ids': get_setting('mail_partner_ids', default_value=self._get_default_mail_partner_ids(move, mail_template, mail_lang).ids),
+                'reply_to': get_setting('reply_to') or self._get_mail_default_field_value_from_template(mail_template, mail_lang, move, 'reply_to'),
             })
         # Add mail attachments if sending methods support them
         if self._display_attachments_widget(vals['invoice_edi_format'], vals['sending_methods']):
@@ -269,16 +270,17 @@ class AccountMoveSend(models.AbstractModel):
         pdf_report = pdf_report or self._get_default_pdf_report_id(move)
         invoice_template = pdf_report | self.env.ref('account.account_invoices')
         extra_mail_templates = mail_template.report_template_ids - invoice_template
-        filename = move._get_invoice_report_filename(report=pdf_report)
-        return [
-            {
+        attachments = []
+        for extra_mail_template in extra_mail_templates:
+            filename = move._get_invoice_report_filename(report=extra_mail_template)
+            attachments.append({
                 'id': f'placeholder_{extra_mail_template.name.lower()}_{filename}',
-                'name': f'{extra_mail_template.name.lower()}_{filename}',
+                'name': filename,
                 'mimetype': 'application/pdf',
                 'placeholder': True,
                 'dynamic_report': extra_mail_template.report_name,
-            } for extra_mail_template in extra_mail_templates
-        ]
+            })
+        return attachments
 
     @api.model
     def _get_invoice_extra_attachments(self, move):
@@ -601,13 +603,16 @@ class AccountMoveSend(models.AbstractModel):
             for attachment in self.env['ir.attachment'].browse(list(seen_attachment_ids)).exists()
         ]
 
-        return {
+        params = {
             'author_id': move_data['author_partner_id'],
             'body': move_data['mail_body'],
             'subject': move_data['mail_subject'],
             'partner_ids': move_data['mail_partner_ids'],
             'attachments': mail_attachments,
         }
+        if move_data.get('reply_to'):
+            params['reply_to'] = move_data['reply_to']
+        return params
 
     @api.model
     def _generate_dynamic_reports(self, moves_data):

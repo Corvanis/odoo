@@ -3,27 +3,28 @@
 # * hr
 #
 # Translators:
-# Alina Lisnenko <alina.lisnenko@erp.co.ua>, 2023
+# Alina Lisnenko <alina.lisnenko@erp.co.ua>, 2023, 2026.
 # Martin Trigaux, 2023
 # Weblate <noreply-mt-weblate@weblate.org>, 2025.
+# Vlad Patenko <vlad.patenko@gmail.com>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-01-25 18:35+0000\n"
-"PO-Revision-Date: 2025-11-08 19:01+0000\n"
-"Last-Translator: Weblate <noreply-mt-weblate@weblate.org>\n"
-"Language-Team: Ukrainian <https://translate.odoo.com/projects/odoo-19/hr/uk/"
-">\n"
+"POT-Creation-Date: 2026-03-20 18:35+0000\n"
+"PO-Revision-Date: 2026-04-16 08:25+0000\n"
+"Last-Translator: Vlad Patenko <vlad.patenko@gmail.com>\n"
+"Language-Team: Ukrainian <https://translate.odoo.com/projects/odoo-19/hr/uk/>"
+"\n"
 "Language: uk\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
-"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != "
-"11 ? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % "
-"100 > 14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || "
-"(n % 100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
-"X-Generator: Weblate 5.12.2\n"
+"Plural-Forms: nplurals=4; plural=(n % 1 == 0 && n % 10 == 1 && n % 100 != 11 "
+"? 0 : n % 1 == 0 && n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > "
+"14) ? 1 : n % 1 == 0 && (n % 10 ==0 || (n % 10 >=5 && n % 10 <=9) || (n % "
+"100 >=11 && n % 100 <=14 )) ? 2: 3);\n"
+"X-Generator: Weblate 5.16.2\n"
 
 #. module: hr
 #. odoo-python
@@ -153,6 +154,8 @@ msgid ""
 "<i class=\"fa fa-envelope fa-fw me-1 text-primary\" title=\"Work Email\" "
 "invisible=\"login == work_email\"/>"
 msgstr ""
+"<i class=\"fa fa-envelope fa-fw me-1 text-primary\" title=\"Робочий email\" "
+"invisible=\"login == work_email\"/>"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.hr_employee_public_view_form
@@ -161,6 +164,7 @@ msgstr ""
 msgid ""
 "<i class=\"fa fa-envelope fa-fw me-1 text-primary\" title=\"Work Email\"/>"
 msgstr ""
+"<i class=\"fa fa-envelope fa-fw me-1 text-primary\" title=\"Робочий еmail\"/>"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.res_users_view_form
@@ -177,6 +181,7 @@ msgstr ""
 msgid ""
 "<i class=\"fa fa-fw me-2 fa-birthday-cake text-primary\" title=\"Birthday\"/>"
 msgstr ""
+"<i class=\"fa fa-fw me-2 fa-birthday-cake text-primary\" title=\"Birthday\"/>"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.hr_kanban_view_employees
@@ -240,7 +245,7 @@ msgstr ""
 #: model_terms:ir.actions.act_window,help:hr.hr_employee_public_action
 #: model_terms:ir.actions.act_window,help:hr.open_view_employee_list_my
 msgid "<small>Documents</small>"
-msgstr ""
+msgstr "<small>Документи</small>"
 
 #. module: hr
 #: model_terms:ir.actions.act_window,help:hr.hr_employee_public_action
@@ -419,7 +424,7 @@ msgstr ""
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "<span>Contract Overview</span>"
-msgstr ""
+msgstr "<span>Огляд контракту</span>"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.res_config_settings_view_form
@@ -439,7 +444,7 @@ msgstr "<span>Перегляд</span>"
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_hr_job_form
 msgid "<span>new employees</span>"
-msgstr ""
+msgstr "<span>нові співробітники</span>"
 
 #. module: hr
 #: model_terms:hr.job,website_description:hr.job_trainee
@@ -1007,7 +1012,7 @@ msgstr ""
 "b> від природи потрібно думати нестандартно.\n"
 "                                Ми сподіваємось, що кандидат буде "
 "ініціативним і має дух \"зробити це\". Щоб досягти успіху,\n"
-" ви будете мати надійні навички вирішення проблем"
+" ви будете мати надійні навички вирішення проблем."
 
 #. module: hr
 #: model_terms:hr.job,website_description:hr.job_cto
@@ -1254,7 +1259,7 @@ msgstr "Бінарний файл"
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__birthday
 msgid "Birthday"
-msgstr ""
+msgstr "День народження"
 
 #. module: hr
 #. odoo-javascript
@@ -1515,7 +1520,7 @@ msgstr "Період повідомлення про закінчення тер
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.hr_contract_template_form_view
 msgid "Contract Overview"
-msgstr ""
+msgstr "Огляд контракту"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__contract_date_start
@@ -1731,7 +1736,7 @@ msgstr "Валюта"
 #: model:ir.model.fields,help:hr.field_account_setup_bank_manual_config__currency_symbol
 #: model:ir.model.fields,help:hr.field_res_partner_bank__currency_symbol
 msgid "Currency sign, to be used when printing amounts."
-msgstr "Знак валюти, що  використовуватиметься при друці рахунків."
+msgstr "Знак валюти, що використовуватиметься при друці рахунків."
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__current_date_version
@@ -2011,7 +2016,7 @@ msgstr "Документ"
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "Documents"
-msgstr ""
+msgstr "Документи"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__driving_license
@@ -2097,7 +2102,7 @@ msgstr "Псевдоніми ел. пошти"
 #: model_terms:ir.ui.view,arch_db:hr.res_users_view_form_preferences
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "Emergency Contact"
-msgstr ""
+msgstr "Контакт на випадок надзвичайної ситуації"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__emergency_phone
@@ -2297,7 +2302,7 @@ msgstr "Мітки співробітників"
 #. odoo-python
 #: code:addons/hr/models/hr_employee.py:0
 msgid "Employees profile"
-msgstr ""
+msgstr "Профіль співробітника"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_job__contract_type_id
@@ -2914,7 +2919,7 @@ msgstr ""
 #: code:addons/hr/static/src/components/versions_timeline/versions_timeline.js:0
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "Indefinite"
-msgstr ""
+msgstr "Невизначено"
 
 #. module: hr
 #: model:hr.contract.type,name:hr.contract_type_interim
@@ -3166,7 +3171,7 @@ msgstr "Юрисконсульт"
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__legal_name
 msgid "Legal Name"
-msgstr ""
+msgstr "ПІБ"
 
 #. module: hr
 #: model_terms:ir.actions.act_window,help:hr.action_hr_job
@@ -3427,7 +3432,7 @@ msgstr "Обговорюйте та підписуйте контракт"
 #. odoo-javascript
 #: code:addons/hr/static/src/components/button_new_contract/button_new_contract.xml:0
 msgid "New Contract"
-msgstr ""
+msgstr "Новий контракт"
 
 #. module: hr
 #. odoo-javascript
@@ -3517,7 +3522,7 @@ msgstr ""
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "No user linked"
-msgstr ""
+msgstr "Користувач не прив'язаний"
 
 #. module: hr
 #: model_terms:hr.job,website_description:hr.job_consultant
@@ -3553,7 +3558,7 @@ msgstr "Кількість дій"
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_hr_job_tree
 msgid "Number of Employees"
-msgstr ""
+msgstr "Кількість співробітників"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.res_config_settings_view_form
@@ -3614,7 +3619,7 @@ msgstr "Кількість нових співробітників, яких в�
 #: model:ir.model.fields.selection,name:hr.selection__hr_employee__hr_presence_state__out_of_working_hour
 #: model:ir.model.fields.selection,name:hr.selection__hr_employee_public__hr_presence_state__out_of_working_hour
 msgid "Off-Hours"
-msgstr ""
+msgstr "Відсутній"
 
 #. module: hr
 #: model:ir.model.fields.selection,name:hr.selection__hr_employee__work_location_type__office
@@ -4418,7 +4423,7 @@ msgstr ""
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__birthday_public_display
 msgid "Show to all employees"
-msgstr ""
+msgstr "Показати всім співробітникам"
 
 #. module: hr
 #. odoo-python
@@ -4462,7 +4467,7 @@ msgstr "Дата народження дружини"
 #: model:ir.model.fields,field_description:hr.field_hr_employee__spouse_complete_name
 #: model:ir.model.fields,field_description:hr.field_hr_version__spouse_complete_name
 msgid "Spouse Legal Name"
-msgstr ""
+msgstr "ПІБ чоловіка/дружини"
 
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.hr_version_list_view
@@ -4720,6 +4725,12 @@ msgstr ""
 
 #. module: hr
 #. odoo-python
+#: code:addons/hr/models/hr_employee.py:0
+msgid "The following employees have the same work email address: %s"
+msgstr ""
+
+#. module: hr
+#. odoo-python
 #: code:addons/hr/models/res_users.py:0
 msgid "The following fields were modified by %s"
 msgstr "Наступні поля були змінені %s"
@@ -4758,7 +4769,7 @@ msgstr "Користувач тренера %s не встановлений."
 #. module: hr
 #: model:res.groups,comment:hr.group_hr_user
 msgid "The user will be able to create and edit employees."
-msgstr ""
+msgstr "Користувач буде мати змогу створити і редагувати співробітника."
 
 #. module: hr
 #: model:res.groups,comment:hr.group_hr_manager
@@ -5045,7 +5056,7 @@ msgstr ""
 #. module: hr
 #: model_terms:ir.ui.view,arch_db:hr.view_employee_form
 msgid "Visa & Work Permit"
-msgstr ""
+msgstr "Віза та дозвіл на роботу"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__visa_expire
@@ -5222,7 +5233,7 @@ msgstr ""
 #: model:ir.actions.act_window,name:hr.hr_work_location_action
 #: model:ir.ui.menu,name:hr.menu_hr_work_location_tree
 msgid "Work Locations"
-msgstr "Робоче розтажування"
+msgstr "Робоче розташування"
 
 #. module: hr
 #: model:ir.model.fields,field_description:hr.field_hr_employee__mobile_phone

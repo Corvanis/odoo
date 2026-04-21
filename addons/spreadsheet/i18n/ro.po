@@ -5,13 +5,14 @@
 # "Tiffany Chang (tic)" <tic@odoo.com>, 2025.
 # Weblate <noreply-mt-weblate@weblate.org>, 2025.
 # Dorin Hongu <dhongu@gmail.com>, 2025.
+# Odoo Translation Bot <c3p@odoo.com>, 2026.
 msgid ""
 msgstr ""
 "Project-Id-Version: Odoo Server 18.0+e\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-03-06 18:37+0000\n"
-"PO-Revision-Date: 2025-12-20 19:04+0000\n"
-"Last-Translator: Dorin Hongu <dhongu@gmail.com>\n"
+"POT-Creation-Date: 2026-04-10 18:39+0000\n"
+"PO-Revision-Date: 2026-04-13 20:51+0000\n"
+"Last-Translator: Odoo Translation Bot <c3p@odoo.com>\n"
 "Language-Team: Romanian <https://translate.odoo.com/projects/odoo-19/"
 "spreadsheet/ro/>\n"
 "Language: ro\n"
@@ -20,7 +21,7 @@ msgstr ""
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
 "20)) ? 1 : 2;\n"
-"X-Generator: Weblate 5.14.3\n"
+"X-Generator: Weblate 5.16.2\n"
 
 #. module: spreadsheet
 #. odoo-javascript
@@ -354,6 +355,12 @@ msgstr "=PIVOT(${"
 
 #. module: spreadsheet
 #. odoo-javascript
+#: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.xml:0
+msgid "A"
+msgstr ""
+
+#. module: spreadsheet
+#. odoo-javascript
 #: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
 msgid ""
 "A boolean indicating whether to use A1 style notation (TRUE) or R1C1 style "
@@ -529,6 +536,12 @@ msgid "A range or array constant containing the dates to consider holidays."
 msgstr ""
 "Un interval sau o constantă de tip șir care conține datele considerate "
 "sărbători."
+
+#. module: spreadsheet
+#. odoo-javascript
+#: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
+msgid "A reference to a cell."
+msgstr ""
 
 #. module: spreadsheet
 #. odoo-javascript
@@ -1393,9 +1406,8 @@ msgstr "Șir sau interval care conține setul de date de luat în considerare."
 #. module: spreadsheet
 #. odoo-javascript
 #: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
-msgid "Array result was not expanded because it would overwrite data in %s."
+msgid "Array result was not expanded because it would overwrite data."
 msgstr ""
-"Rezultatul șirului nu a fost extins, deoarece ar suprascrie datele în %s."
 
 #. module: spreadsheet
 #. odoo-javascript
@@ -2076,6 +2088,14 @@ msgstr "Tip grafic"
 #: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
 msgid "Checkbox"
 msgstr "Checkbox"
+
+#. module: spreadsheet
+#. odoo-javascript
+#: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
+msgid ""
+"Checks whether there is a reference to a cell that contains a formula, and "
+"returns TRUE or FALSE."
+msgstr ""
 
 #. module: spreadsheet
 #. odoo-javascript
@@ -6481,6 +6501,12 @@ msgstr "Valoare medie numerică într-un set de date."
 #: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
 msgid "OFFSET evaluates to an out of bounds range."
 msgstr "OFFSET evaluează la un interval în afara limitelor."
+
+#. module: spreadsheet
+#. odoo-javascript
+#: code:addons/spreadsheet/static/src/helpers/geo_json_service.js:0
+msgid "Oceania"
+msgstr ""
 
 #. module: spreadsheet
 #. odoo-javascript
@@ -14011,6 +14037,12 @@ msgstr "astăzi"
 #: code:addons/spreadsheet/static/src/o_spreadsheet/o_spreadsheet.js:0
 msgid "tomorrow"
 msgstr "mâine"
+
+#. module: spreadsheet
+#. odoo-javascript
+#: code:addons/spreadsheet/static/src/public_readonly_app/public_readonly.xml:0
+msgid "x"
+msgstr ""
 
 #. module: spreadsheet
 #. odoo-javascript

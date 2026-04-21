@@ -889,7 +889,10 @@ class StockPicking(models.Model):
         for picking in self:
             picking.weight_bulk = picking_weights[picking.id]
 
-    @api.depends('move_line_ids.result_package_id', 'move_line_ids.result_package_id.shipping_weight', 'move_line_ids.result_package_id.outermost_package_id.shipping_weight', 'weight_bulk')
+    @api.depends(
+        'move_line_ids.result_package_id', 'move_line_ids.result_package_id.package_type_id', 'move_line_ids.result_package_id.shipping_weight',
+        'move_line_ids.result_package_id.outermost_package_id', 'move_line_ids.result_package_id.outermost_package_id.package_type_id', 'move_line_ids.result_package_id.outermost_package_id.shipping_weight',
+        'weight_bulk')
     def _compute_shipping_weight(self):
         for picking in self:
             # if shipping weight is not assigned => default to calculated product weight
@@ -1218,7 +1221,7 @@ class StockPicking(models.Model):
             'type': 'ir.actions.act_window',
             'res_model': 'stock.move.line',
             'views': [(view_id, 'list')],
-            'domain': [('id', 'in', self.move_line_ids.ids)],
+            'domain': [('picking_id', '=', self.id)],
             'context': {
                 'sml_specific_default': True,
                 'default_picking_id': self.id,

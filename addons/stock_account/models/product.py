@@ -1,12 +1,12 @@
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
 from bisect import bisect
 from collections import defaultdict
-from datetime import datetime
+from datetime import date, datetime, time
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
 from odoo.fields import Domain
-from odoo.tools import SQL
+from odoo.tools import SQL, split_every
 
 
 class ProductTemplate(models.Model):
@@ -47,6 +47,9 @@ class ProductTemplate(models.Model):
             raise UserError(self.env._("Only the value 'periodic' and 'real_time' are accepted to search on valuation field."))
         domain_categ = Domain([('categ_id.property_valuation', operator, value)])
         domain_company = Domain(['|', ('categ_id.property_valuation', '=', False), ('categ_id', '=', False), ('company_id.inventory_valuation', operator, value)])
+
+        if self.env.company.inventory_valuation and self.env.company.inventory_valuation == value:
+            domain_company = Domain(['|', ('categ_id.property_valuation', '=', False), ('categ_id', '=', False), '|', ('company_id.inventory_valuation', operator, value), ('company_id', '=', False)])
         return domain_company | domain_categ
 
     @api.depends('tracking')
@@ -176,21 +179,31 @@ class ProductProduct(models.Model):
     def _compute_value(self):
         company_id = self.env.company
         self.company_currency_id = company_id.currency_id
+        products = self._with_valuation_context()
+
+        at_date = self.env.context.get('to_date')
+        original_value = at_date
+        at_date = fields.Datetime.to_datetime(at_date)
+        if (isinstance(original_value, date) and not isinstance(original_value, datetime)) or \
+            (isinstance(original_value, str) and len(original_value) == 10):
+            at_date = datetime.combine(at_date.date(), time.max)
+
+        if at_date:
+            products = products.with_context(at_date=at_date, to_date=at_date)
+
         # PERF: Pre-compute:the sum of 'total_value' of lots per product in go
         std_price_by_company_id = {}
         total_value_by_company_id = {}
         lot_valuated_products_ids = {p.id for p in self if p.lot_valuated}
+        valued_quantity_by_product_id = defaultdict(float)
         for company in self.env.companies:
             std_price_by_product_id = defaultdict(float)
             total_value_by_product_id = defaultdict(float)
 
             products = self.with_company(company.id).with_context(allowed_company_ids=company.ids)
             products = products._with_valuation_context()
-
-            at_date = fields.Datetime.to_datetime(self.env.context.get('to_date'))
             if at_date:
-                at_date = at_date.replace(hour=23, minute=59, second=59)
-                products = products.with_context(at_date=at_date)
+                products = products.with_context(at_date=at_date, to_date=at_date)
 
             env = products.env
 
@@ -237,14 +250,14 @@ class ProductProduct(models.Model):
                 product_ids_grouped_by_cost_method[product.cost_method].add(product.id)
 
             for cost_method, product_ids in product_ids_grouped_by_cost_method.items():
-                products = products.env['product.product'].browse(product_ids).with_context(warehouse_id=False)
+                products_to_value = products.env['product.product'].browse(product_ids).with_context(warehouse_id=False)
                 # To remove once price_unit isn't truncate in sql anymore (no need of force_recompute)
                 if cost_method == 'standard':
-                    std_prices, total_values = products._run_standard_batch(at_date=at_date)
+                    std_prices, total_values = products_to_value._run_standard_batch(at_date=at_date)
                 elif cost_method == 'average':
-                    std_prices, total_values = products._run_average_batch(at_date=at_date)
+                    std_prices, total_values = products_to_value._run_average_batch(at_date=at_date)
                 else:
-                    std_prices, total_values = products._run_fifo_batch(at_date=at_date)
+                    std_prices, total_values = products_to_value._run_fifo_batch(at_date=at_date)
 
                 std_price_by_product_id.update(std_prices)
                 total_value_by_product_id.update(total_values)
@@ -252,13 +265,15 @@ class ProductProduct(models.Model):
             for product in products:
                 total_value = total_value_by_product_id.get(product.id, 0)
                 total_value_by_product_id[product.id] = total_value * ratio_by_product_id.get(product.id, 1)
+                valued_quantity_by_product_id[product.id] += product.qty_available
 
             std_price_by_company_id[company.id] = std_price_by_product_id
             total_value_by_company_id[company.id] = total_value_by_product_id
 
         for product in self:
             product.total_value = sum(total_value_by_company_id[c.id].get(product.id, 0) for c in self.env.companies)
-            product.avg_cost = product.total_value / product.qty_available if product.qty_available else std_price_by_company_id[self.env.company.id].get(product.id, product.standard_price)
+            valued_quantity = valued_quantity_by_product_id[product.id]
+            product.avg_cost = product.total_value / valued_quantity if valued_quantity else std_price_by_company_id[self.env.company.id].get(product.id, product.standard_price)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -348,7 +363,7 @@ class ProductProduct(models.Model):
 
     def _with_valuation_context(self):
         valued_locations = self.env['stock.location'].search([('is_valued_internal', '=', True)])
-        return self.with_context(location=valued_locations.ids, owners=[False, self.env.company.partner_id.id])
+        return self.with_context(location=valued_locations.ids, owners=[False, self.env.company.partner_id.id], strict=True)
 
     def _get_remaining_moves(self):
         moves_qty_by_product = {}
@@ -377,6 +392,7 @@ class ProductProduct(models.Model):
         std_price_by_product_id = {}
         value_by_product_id = {}
         quantity_by_product_id = {}
+        date_by_product_id = {}
 
         if not at_date and not force_recompute:
             std_price_by_product_id = {p.id: p.standard_price for p in self}
@@ -397,73 +413,102 @@ class ProductProduct(models.Model):
                 ('date', '<=', at_date),
             ])
 
-        # PERF avoid memoryerror
-        move_fields = ['date', 'is_dropship', 'is_in', 'is_out', 'location_dest_id', 'location_id', 'move_line_ids',
-                       'picked', 'value', 'product_id']
         last_manual_value_by_product = self._get_last_product_value(at_date, lot=lot)
         oldest_manual_value = min(pv.date for pv in last_manual_value_by_product.values()) if last_manual_value_by_product else False
-
-        if oldest_manual_value:
+        if oldest_manual_value and self.env['product.product'].concat(*last_manual_value_by_product.keys()) == self:
             moves_domain &= Domain([('date', '>=', oldest_manual_value)])
-        moves = self.env['stock.move'].search_fetch(
-            moves_domain,
-            field_names=move_fields,
-            order='date, id'
-        )
-        moves.move_line_ids.fetch(['company_id', 'location_id', 'location_dest_id', 'lot_id', 'owner_id', 'picked', 'quantity_product_uom'])
-        moves_by_product = moves.grouped(key=lambda m: m.product_id)
-        # Start from last user input values.
+
+        product_ids_by_manual_value_date = defaultdict(list)
+        if not lot:
+            for manual_value in last_manual_value_by_product.values():
+                product_ids_by_manual_value_date[manual_value.date].append(manual_value.product_id.id)
+
         for manual_value in last_manual_value_by_product.values():
             product = manual_value.product_id
             if lot:
                 quantity = lot.with_context(to_date=manual_value.date, skip_in_progress=True).product_qty
             else:
-                quantity = product.with_context(to_date=manual_value.date).qty_available
+                quantity = product.with_prefetch(product_ids_by_manual_value_date[manual_value.date]).with_context(to_date=manual_value.date).qty_available
 
             std_price_by_product_id[product.id] = manual_value.value
             quantity_by_product_id[product.id] = quantity
             value_by_product_id[product.id] = manual_value.value * quantity
+            date_by_product_id[product.id] = manual_value.date
 
-            moves = moves_by_product.get(product, self.env['stock.move'])
-            index = bisect(moves, manual_value.date, key=lambda m: m.date)
-            moves = moves[index:]
-            moves_by_product[product] = moves
+        self.env['product.value'].invalidate_model()  # Avoid keeping too many records in cache
 
-        # Replay the valuation history
-        for product, moves in moves_by_product.items():
-            # Start from last manual input
+        moves = self.env['stock.move'].search_fetch(
+            moves_domain,
+            field_names=['id'],
+            order='product_id, date, id'
+        )
+        # PERF avoid memoryerror
+        move_fields = ['date', 'is_dropship', 'is_in', 'is_out', 'location_dest_id', 'location_id', 'move_line_ids', 'picked', 'value', 'product_id']
+        move_line_fields = ['company_id', 'location_id', 'location_dest_id', 'lot_id', 'owner_id', 'picked', 'quantity_product_uom']
+
+        product, valuation_from_date = False, False
+        batch_size = 50000
+
+        move_ids_by_product = defaultdict(list)
+        # Limit the memory usage since it's possible to have millions of stock.move
+        for moves_batch in split_every(batch_size, moves.ids):
+            moves_batch = self.env['stock.move'].browse(moves_batch)
+            moves_batch.fetch(['product_id', 'date'])
+
+            for move in moves_batch:
+                if move.product_id != product:
+                    product = move.product_id
+                    valuation_from_date = date_by_product_id.get(product.id)
+                if valuation_from_date and move.date <= valuation_from_date:
+                    continue
+                move_ids_by_product[product].append(move.id)
+
+            self.env['stock.move'].invalidate_model()
+
+        for product, move_ids in move_ids_by_product.items():
+            product_moves = self.env['stock.move'].browse(move_ids)
+
+            first_move = product_moves[0]
             quantity = quantity_by_product_id.get(product.id, 0)
-            average_cost = std_price_by_product_id.get(product.id, 0)
+            average_cost = std_price_by_product_id.get(product.id, first_move.value / first_move._get_valued_qty() if first_move._get_valued_qty() else 0)
             value = value_by_product_id.get(product.id, 0)
-            for move in moves:
-                if move.is_in or move.is_dropship:
-                    in_qty = move._get_valued_qty()
-                    in_value = move.value
-                    if at_date or move.is_dropship:
-                        in_value = move._get_value(at_date=at_date)
-                    if lot:
-                        lot_qty = move._get_valued_qty(lot)
-                        in_value = (in_value * lot_qty / in_qty) if in_qty else 0
-                        in_qty = lot_qty
-                    previous_qty = quantity
-                    quantity += in_qty
-                    # Regular case, value from accumulation
-                    if previous_qty > 0:
-                        value += in_value
-                        average_cost = value / quantity
-                    # From negative quantity case, value from last_in
-                    elif previous_qty <= 0:
-                        average_cost = in_value / in_qty if in_qty else average_cost
-                        value = average_cost * quantity
-                if move.is_out or move.is_dropship:
-                    out_qty = move._get_valued_qty()
-                    out_value = out_qty * average_cost
-                    if lot:
-                        lot_qty = move._get_valued_qty(lot)
-                        out_value = (out_value * lot_qty / out_qty) if out_qty else 0
-                        out_qty = lot_qty
-                    value -= out_value
-                    quantity -= out_qty
+
+            for moves_batch in split_every(batch_size, product_moves.ids):
+                moves_batch = self.env['stock.move'].browse(moves_batch)
+                moves_batch.fetch(move_fields)
+                moves_batch.move_line_ids.fetch(move_line_fields)
+                for move in moves_batch:
+                    if move.is_in or move.is_dropship:
+                        in_qty = move._get_valued_qty()
+                        in_value = move.value
+                        if at_date or move.is_dropship:
+                            in_value = move._get_value(at_date=at_date, forced_std_price=average_cost)
+                        if lot:
+                            lot_qty = move._get_valued_qty(lot)
+                            in_value = (in_value * lot_qty / in_qty) if in_qty else 0
+                            in_qty = lot_qty
+                        previous_qty = quantity
+                        quantity += in_qty
+                        # Regular case, value from accumulation
+                        if previous_qty > 0:
+                            value += in_value
+                            average_cost = value / quantity
+                        # From negative quantity case, value from last_in
+                        elif previous_qty <= 0:
+                            average_cost = in_value / in_qty if in_qty else average_cost
+                            value = average_cost * quantity
+                    if move.is_out or move.is_dropship:
+                        out_qty = move._get_valued_qty()
+                        out_value = out_qty * average_cost
+                        if lot:
+                            lot_qty = move._get_valued_qty(lot)
+                            out_value = (out_value * lot_qty / out_qty) if out_qty else 0
+                            out_qty = lot_qty
+                        value -= out_value
+                        quantity -= out_qty
+
+                self.env['stock.move'].invalidate_model()  # Avoid keeping too many records in cache
+                self.env['stock.move.line'].invalidate_model()
 
             std_price_by_product_id[product.id] = average_cost
             value_by_product_id[product.id] = value

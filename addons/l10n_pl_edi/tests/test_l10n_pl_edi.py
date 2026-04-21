@@ -396,6 +396,25 @@ class TestL10nPlEdi(AccountTestInvoicingCommon, CronMixinCase):
         )
 
     @freeze_time('2026-01-23')
+    def test_invoice_in_foreign_currency(self):
+        self.env.ref('base.EUR').active = True
+
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_pl.id,
+            'invoice_date': fields.Date.today(),
+            'currency_id': self.env.ref('base.EUR').id,
+            'invoice_line_ids': [Command.create({
+                'product_id': self.product_a.id,
+                'quantity': 1,
+                'price_unit': 10.0,
+            })],
+            'invoice_currency_rate': '2',
+        })
+        invoice.action_post()
+        self._assert_export_invoice(invoice, 'fa3_invoice_foreign_currency.xml')
+
+    @freeze_time('2026-01-23')
     def test_scenario_correction_values_are_negative(self):
         """
         Verification of Negative Values for Corrections (Difference Method).
@@ -601,6 +620,7 @@ class TestL10nPlEdi(AccountTestInvoicingCommon, CronMixinCase):
                     return {'xml_content': file.read()}
             return {'error': {'retry_after': 120, 'message': 'Too Many Requests'}}
 
+        start = fields.Datetime.now()
         with (
             patch.object(KsefApiService, 'query_invoice_metadata', side_effect=query_invoice_metadata),
             patch.object(KsefApiService, 'get_invoice_by_ksef_number', side_effect=get_invoice_by_ksef_number),
@@ -616,5 +636,5 @@ class TestL10nPlEdi(AccountTestInvoicingCommon, CronMixinCase):
         self.assertFalse(bill_2)
 
         self.assertEqual(len(capt.records), cron_runs_before + 1)
-        self.assertGreaterEqual(capt.records[-1].call_at, fields.Datetime.now() + timedelta(seconds=120))
-        self.assertLessEqual(capt.records[-1].call_at, fields.Datetime.now() + timedelta(seconds=240))
+        self.assertGreaterEqual(capt.records[-1].call_at, start + timedelta(seconds=120))
+        self.assertLessEqual(capt.records[-1].call_at, start + timedelta(seconds=240))

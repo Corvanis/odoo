@@ -1418,6 +1418,9 @@ export class ListRenderer extends Component {
         }
 
         const closestCell = ev.target.closest("td, th");
+        if (closestCell.querySelector(".o_select_menu [aria-expanded=true]")) {
+            return;
+        }
 
         if (this.toggleFocusInsideCell(hotkey, closestCell)) {
             return;
@@ -1702,9 +1705,13 @@ export class ListRenderer extends Component {
      * @returns {boolean} true if some behavior has been taken
      */
     onCellKeydownEditMode(hotkey, cell, group, record) {
+        if (!record) {
+            return false;
+        }
+
         const { cycleOnTab, list } = this.props;
         const row = cell.parentElement;
-        const applyMultiEditBehavior = record && record.selected && list.model.multiEdit;
+        const applyMultiEditBehavior = record.selected && list.model.multiEdit;
         const isDirty = record.dirty || this.lastIsDirty;
         const topReCreate = this.props.editable === "top" && record.isNew;
 

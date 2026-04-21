@@ -451,6 +451,9 @@ class Registry(Mapping[str, type["BaseModel"]]):
             # recursively mark fields to re-setup
             todo = []
             for model_cls in self.models.values():
+                if model_cls._custom:
+                    # custom models are going to be reloaded and set up below
+                    model_cls._setup_done__ = False
                 if model_cls._setup_done__:
                     models_field_depends_done.add(model_cls)
                 else:
@@ -591,7 +594,10 @@ class Registry(Mapping[str, type["BaseModel"]]):
         self._is_modifying_relations.clear()
 
         # discard fields from field inverses
-        self.field_inverses.discard_keys_and_values(fields)
+        if 'field_inverses' in vars(self):
+            self.field_inverses.discard_keys_and_values(fields)
+
+        self.field_setup_dependents.discard_keys_and_values(fields)
 
     def get_field_trigger_tree(self, field: Field) -> TriggerTree:
         """ Return the trigger tree of a field by computing it from the transitive

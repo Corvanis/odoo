@@ -17,7 +17,13 @@ import { setupEditor } from "../_helpers/editor";
 import { cleanLinkArtifacts } from "../_helpers/format";
 import { getContent, setContent, setSelection } from "../_helpers/selection";
 import { expectElementCount } from "../_helpers/ui_expectations";
-import { insertLineBreak, insertText, splitBlock, undo } from "../_helpers/user_actions";
+import {
+    insertLineBreak,
+    insertSpace,
+    insertText,
+    splitBlock,
+    undo,
+} from "../_helpers/user_actions";
 import { execCommand } from "../_helpers/userCommands";
 
 const base64Img =
@@ -440,7 +446,7 @@ describe("Link creation", () => {
         test("typing valid URL + space should convert to link", async () => {
             const { editor, el } = await setupEditor("<p>[]</p>");
             await insertText(editor, "http://google.co.in");
-            await insertText(editor, " ");
+            await insertSpace(editor);
             expect(cleanLinkArtifacts(getContent(el))).toBe(
                 '<p><a href="http://google.co.in">http://google.co.in</a>&nbsp;[]</p>'
             );
@@ -448,7 +454,7 @@ describe("Link creation", () => {
         test("typing valid URL without protocol + space should convert to https link", async () => {
             const { editor, el } = await setupEditor("<p>[]</p>");
             await insertText(editor, "google.com");
-            await insertText(editor, " ");
+            await insertSpace(editor);
             expect(cleanLinkArtifacts(getContent(el))).toBe(
                 '<p><a href="https://google.com">google.com</a>&nbsp;[]</p>'
             );
@@ -456,7 +462,7 @@ describe("Link creation", () => {
         test("typing valid http URL + space should convert to http link", async () => {
             const { editor, el } = await setupEditor("<p>[]</p>");
             await insertText(editor, "http://google.com");
-            await insertText(editor, " ");
+            await insertSpace(editor);
             expect(cleanLinkArtifacts(getContent(el))).toBe(
                 '<p><a href="http://google.com">http://google.com</a>&nbsp;[]</p>'
             );
@@ -1177,6 +1183,20 @@ describe("shortcut", () => {
         await animationFrame();
         expect(".o_we_discard_link").toBeFocused();
     });
+    test("should not create a link via shortcut for partial selection inside contenteditable false", async () => {
+        const { el } = await setupEditor(`<p contenteditable="false">T[e]st</p>`);
+        await press(["ctrl", "k"]);
+        await animationFrame();
+        await click(".o_command_name:first");
+        await waitFor(".o_notification_manager .o_notification", { timeout: 1000 });
+        expect(queryOne(".o_notification_content").textContent).toBe(
+            "Unable to create a link on the current selection."
+        );
+        expect(getContent(el)).toBe(
+            '<p data-selection-placeholder=""><br></p><p contenteditable="false">T[e]st</p><p data-selection-placeholder="" style="margin: -9px 0px 8px;"><br></p>'
+        );
+        expect(queryOne(`p[contenteditable="false"]`).childNodes.length).toBe(1);
+    });
 });
 
 describe("link preview", () => {
@@ -1592,7 +1612,7 @@ describe("link in contenteditable=false", () => {
 });
 
 describe("upload file via link popover", () => {
-    test("should display upload button when url input is empty", async () => {
+    test("should display upload button whether url input is empty or filled.", async () => {
         const { editor } = await setupEditor("<p>[]<br></p>");
         execCommand(editor, "openLinkTools");
         await waitFor(".o-we-linkpopover");
@@ -1601,11 +1621,7 @@ describe("upload file via link popover", () => {
         await click(".o_we_href_input_link");
         await press("a");
         await animationFrame();
-        // Upload button should NOT be visible
-        expect("button i[class='fa fa-upload']").toHaveCount(0);
-        await press("Backspace");
-        await animationFrame();
-        // Upload button should be visible again
+        // Still upload button should be visible
         expect("button i[class='fa fa-upload']").toHaveCount(1);
     });
     const patchUpload = (editor) => {

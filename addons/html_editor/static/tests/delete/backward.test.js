@@ -2094,7 +2094,7 @@ describe("Selection not collapsed", () => {
             stepFunction: deleteBackward,
             contentAfter: unformat(
                 `<table><tbody>
-                    <tr><td>[]ef</td><td>gh</td></tr>
+                    <tr><td>ef[]</td><td>gh</td></tr>
                 </tbody></table>`
             ),
         });
@@ -2111,7 +2111,7 @@ describe("Selection not collapsed", () => {
             stepFunction: deleteBackward,
             contentAfter: unformat(
                 `<table><tbody>
-                    <tr><td>[]cd</td></tr>
+                    <tr><td>cd[]</td></tr>
                     <tr><td>gh</td></tr>
                 </tbody></table>`
             ),
@@ -2284,6 +2284,14 @@ describe("Selection not collapsed", () => {
             stepFunction: deleteBackward,
             contentAfter: `<div><br></div><div>[]<br></div>`,
             config: { baseContainers: ["DIV"] },
+        });
+    });
+
+    test("should not remove blockquote when it contains content on Backspace", async () => {
+        await testEditor({
+            contentBefore: `<blockquote><img>[]</blockquote>`,
+            stepFunction: deleteBackward,
+            contentAfter: `<blockquote>[]<br></blockquote>`,
         });
     });
 

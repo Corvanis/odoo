@@ -120,7 +120,7 @@ class AccountMoveSend(models.AbstractModel):
     def _is_applicable_to_company(self, method, company):
         # EXTENDS 'account'
         if method == 'peppol':
-            return company.country_code in PEPPOL_LIST and company.account_peppol_proxy_state != 'rejected'
+            return company.country_code in PEPPOL_LIST and company.account_peppol_proxy_state not in ('not_registered', 'in_verification', 'rejected')
         else:
             return super()._is_applicable_to_company(method, company)
 
@@ -251,7 +251,7 @@ class AccountMoveSend(models.AbstractModel):
                         for attachment in attachments_linked
                     ] + base_attachments
 
-                    new_message = invoice.message_post(
+                    new_message = invoice.with_context(no_document=True).message_post(
                         body=attachments_linked_message,
                         attachments=attachments_embedded
                     )

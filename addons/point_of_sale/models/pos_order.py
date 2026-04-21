@@ -287,8 +287,7 @@ class PosOrder(models.Model):
         return invoice_lines
 
     def _get_pos_anglo_saxon_price_unit(self, product, partner_id, quantity):
-        moves = self.filtered(lambda o: o.partner_id.id == partner_id)\
-            .mapped('picking_ids.move_ids')\
+        moves = self.mapped('picking_ids.move_ids')\
             .filtered(lambda m: m.is_valued and m.product_id.valuation == 'real_time' and m.product_id.id == product.id)\
             .sorted(lambda x: x.date)
         return moves._get_price_unit()
@@ -525,7 +524,7 @@ class PosOrder(models.Model):
                 company=order.company_id,
                 cash_rounding=cash_rounding,
             )
-            refund_factor = -1 if (order.amount_total < 0.0) else 1
+            refund_factor = -1 if (order.is_refund or order.amount_total < 0.0) else 1
             order.amount_tax = refund_factor * tax_totals['tax_amount_currency']
             order.amount_total = refund_factor * tax_totals['total_amount_currency']
             order.amount_difference = order.amount_paid - order.amount_total
@@ -573,6 +572,8 @@ class PosOrder(models.Model):
         values.setdefault('pricelist_id', session.config_id.pricelist_id.id)
         values.setdefault('fiscal_position_id', session.config_id.default_fiscal_position_id.id)
         values.setdefault('company_id', session.config_id.company_id.id)
+        if session.config_id.use_presets and session.config_id.default_preset_id:
+            values.setdefault('preset_id', session.config_id.default_preset_id.id)
 
         if not values.get('pos_reference'):
             reference, tracking_number = session.config_id._get_next_order_refs()
@@ -773,15 +774,27 @@ class PosOrder(models.Model):
         return currency.round(amount) if currency else amount
 
     def _get_partner_bank_id(self):
-        bank_partner_id = False
+        partner_bank_id = False
         amount_total = sum(order.amount_total for order in self)
+
+        def _first_allowed(bank_ids):
+            return bank_ids.filtered(lambda b: b.allow_out_payment)[:1]
+
+        # Case 1: refund / negative amount → customer bank
         if amount_total <= 0 and self.partner_id.bank_ids:
-            bank_partner_id = self.partner_id.bank_ids[0].id
-        elif amount_total >= 0 and self.payment_ids and self.payment_ids[0].payment_method_id.journal_id.bank_account_id:
-            bank_partner_id = self.payment_ids[0].payment_method_id.journal_id.bank_account_id.id
-        elif amount_total >= 0 and self.company_id.partner_id.bank_ids:
-            bank_partner_id = self.company_id.partner_id.bank_ids[0].id
-        return bank_partner_id
+            partner_bank_id = _first_allowed(self.partner_id.bank_ids)
+
+        # Case 2: positive amount → payment journal bank
+        elif amount_total >= 0 and self.payment_ids:
+            journal_bank = self.payment_ids[0].payment_method_id.journal_id.bank_account_id
+            if journal_bank and journal_bank.allow_out_payment:
+                partner_bank_id = journal_bank
+
+        # Case 3: fallback → company bank
+        if not partner_bank_id and amount_total >= 0 and self.company_id.partner_id.bank_ids:
+            partner_bank_id = _first_allowed(self.company_id.partner_id.bank_ids)
+
+        return partner_bank_id.id if partner_bank_id else False
 
     def _create_invoice(self, move_vals):
         AccountMove = self.env['account.move']
@@ -794,7 +807,7 @@ class PosOrder(models.Model):
         amount_total = sum(order.amount_total for order in self)
         payment_total = sum(order.amount_paid for order in self)
 
-        if self.config_id.cash_rounding:
+        if self.config_id.cash_rounding and invoice.invoice_cash_rounding_id:
             line_ids_commands = []
             rate = invoice.invoice_currency_rate
             sign = invoice.direction_sign
@@ -885,7 +898,7 @@ class PosOrder(models.Model):
         fiscal_position = self.fiscal_position_id
         pos_config = self.config_id
         move_type = 'out_invoice' if not any(
-            order.is_refund or order.amount_total < 0 for order in self
+            order.is_refund or order.amount_total < 0.0 for order in self
         ) else 'out_refund'
         invoice_payment_term_id = (
             self.partner_id.property_payment_term_id.id
@@ -1010,7 +1023,7 @@ class PosOrder(models.Model):
                         'display_type': 'rounding',
                     })
         # Stock.
-        if self.company_id.inventory_valuation == 'real_time' and self.picking_ids.ids:
+        if self.picking_ids.ids:
             stock_moves = self.env['stock.move'].sudo().search([
                 ('picking_id', 'in', self.picking_ids.ids),
                 ('product_id.valuation', '=', 'real_time'),
@@ -1298,6 +1311,8 @@ class PosOrder(models.Model):
 
     def _create_order_picking(self):
         self.ensure_one()
+        if self.picking_ids:
+            return
         if self.shipping_date:
             self.sudo().lines._launch_stock_rule_from_pos_order_lines()
         else:
@@ -1810,6 +1825,10 @@ class PosOrderLine(models.Model):
         self.ensure_one()
         return self.product_id.is_storable and self.product_id.cost_method in ['fifo', 'average']
 
+    def _get_product_cost_with_moves(self, moves):
+        self.ensure_one()
+        return moves._get_price_unit()
+
     def _compute_total_cost(self, stock_moves):
         """
         Compute the total cost of the order lines.
@@ -1818,9 +1837,9 @@ class PosOrderLine(models.Model):
         for line in self.filtered(lambda l: not l.is_total_cost_computed):
             product = line.product_id
             cost_currency = product.sudo().cost_currency_id
-            if line._is_product_storable_fifo_avco() and stock_moves:
-                moves = line._get_stock_moves_to_consider(stock_moves, product)
-                product_cost = moves._get_price_unit()
+            moves = line._get_stock_moves_to_consider(stock_moves, product) if stock_moves else None
+            if moves and line._is_product_storable_fifo_avco():
+                product_cost = line._get_product_cost_with_moves(moves)
                 if cost_currency.is_zero(product_cost) and line.order_id.shipping_date:
                     if line.refunded_orderline_id:
                         product_cost = line.refunded_orderline_id.total_cost / line.refunded_orderline_id.qty
@@ -1869,7 +1888,7 @@ class PosOrderLine(models.Model):
         if fiscal_position:
             account = fiscal_position.map_account(account)
 
-        is_refund_order = line.order_id.amount_total < 0.0
+        is_refund_order = line.order_id.is_refund or line.order_id.amount_total < 0.0
         is_refund_line = line.qty * line.price_unit < 0
 
         lang = line.order_id.partner_id.lang or self.env.user.lang
@@ -1913,7 +1932,7 @@ class PosOrderLine(models.Model):
 
     def _get_discount_amount(self):
         self.ensure_one()
-        original_price = self.tax_ids.compute_all(self.price_unit, self.currency_id, self.qty, product=self.product_id, partner=self.order_id.partner_id)['total_included']
+        original_price = self.tax_ids_after_fiscal_position.compute_all(self.price_unit, self.currency_id, self.qty, product=self.product_id, partner=self.order_id.partner_id)['total_included']
         return original_price - self.price_subtotal_incl
 
 

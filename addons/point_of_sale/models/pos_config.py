@@ -26,7 +26,7 @@ class PosConfig(models.Model):
         return self.env['stock.warehouse'].search(self.env['stock.warehouse']._check_company_domain(self.env.company), limit=1).id
 
     def _default_picking_type_id(self):
-        return self.env['stock.warehouse'].with_context(active_test=False).search(self.env['stock.warehouse']._check_company_domain(self.env.company), limit=1).pos_type_id.id
+        return self.env['stock.warehouse'].search(self.env['stock.warehouse']._check_company_domain(self.env.company), limit=1).pos_type_id.id
 
     def _default_sale_journal(self):
         journal = self.env['account.journal']._ensure_company_account_journal()
@@ -637,6 +637,9 @@ class PosConfig(models.Model):
                 if key in vals.keys():
                     if bypass_payment_method_ids_forbidden_change and key == 'payment_method_ids':
                         continue
+                    # Allow activating a pos config even if it has an open session, but don't allow deactivating it.
+                    if key == 'active' and vals['active']:
+                        continue
                     field_name = self._fields[key].get_description(self.env)["string"]
                     forbidden_fields.append(field_name)
 
@@ -895,6 +898,19 @@ class PosConfig(models.Model):
             return int(config_param)
         except (TypeError, ValueError, OverflowError):
             return DEFAULT_LIMIT_LOAD_PRODUCT
+
+    def get_product_loading_info(self):
+        """Return total product.template count matching the PoS domain and the configured loading limit.
+
+        Used by the frontend to warn the user before triggering a full sync when the product
+        count exceeds the configured limit or crosses the dangerous threshold (20 000+).
+        """
+        self.ensure_one()
+        ProductTemplate = self.env['product.template']
+        domain = ProductTemplate._load_pos_data_domain({}, self)
+        total_count = ProductTemplate.search_count(domain)
+        limit = self.get_limited_product_count()
+        return {'total_count': total_count, 'limit': limit}
 
     def _get_limited_partner_count(self):
         config_param = self.env['ir.config_parameter'].sudo().get_param('point_of_sale.limited_customer_count', DEFAULT_LIMIT_LOAD_PARTNER)

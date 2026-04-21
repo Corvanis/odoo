@@ -140,11 +140,12 @@ export class TablePlugin extends Plugin {
         selection_placeholder_container_predicates: (container) => {
             if (container.nodeName === "TABLE") {
                 return false;
-            } else if (["TD", "TH"].includes(container.nodeName)) {
+            } else if (["TD", "TH"].includes(container.nodeName) && container.closest(".o_table")) {
                 return true;
             }
         },
         normalize_handlers: this.distributeTableColorsToAllCells.bind(this),
+        overlay_selection_target_rect_providers: this.getTableSelectionRangeRect.bind(this),
     };
 
     setup() {
@@ -387,7 +388,7 @@ export class TablePlugin extends Plugin {
             .forEach((td) => td.remove());
         // not sure we should move the cursor?
         siblingCell
-            ? this.dependencies.selection.setCursorStart(siblingCell)
+            ? this.dependencies.selection.setCursorEnd(lastLeaf(siblingCell))
             : this.deleteTable(table);
     }
     /**
@@ -397,9 +398,8 @@ export class TablePlugin extends Plugin {
         const table = closestElement(row, "table");
         const siblingRow = row.previousElementSibling || row.nextElementSibling;
         row.remove();
-        // not sure we should move the cursor?
         siblingRow
-            ? this.dependencies.selection.setCursorStart(siblingRow.querySelector("td, th"))
+            ? this.dependencies.selection.setCursorEnd(lastLeaf(siblingRow.cells[0]))
             : this.deleteTable(table);
     }
     /**
@@ -745,6 +745,25 @@ export class TablePlugin extends Plugin {
         }
 
         return false;
+    }
+
+    getTableSelectionRangeRect() {
+        const selection = this.dependencies.selection.getEditableSelection();
+        if (closestElement(selection.commonAncestorContainer, "table.o_selected_table")) {
+            let [startTd, endTd] = [
+                closestElement(selection.anchorNode, "td"),
+                closestElement(selection.focusNode, "td"),
+            ];
+            if (selection.direction === DIRECTIONS.LEFT) {
+                [startTd, endTd] = [endTd, startTd];
+            }
+            const startTdRect = startTd.getBoundingClientRect();
+            const endTdRect = endTd.getBoundingClientRect();
+            const { left, top } = startTdRect;
+            const { bottom, right } = endTdRect;
+            const rect = new DOMRect(left, top, right - left, bottom - top);
+            return rect;
+        }
     }
 
     /**

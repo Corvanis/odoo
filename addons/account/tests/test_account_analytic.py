@@ -1130,3 +1130,52 @@ class TestAccountAnalyticAccount(AccountTestInvoicingCommon, AnalyticCommon):
         })
         invoice.action_post()
         self.assertEqual(self.get_analytic_lines(invoice).amount, 3.33)
+
+    def test_post_move_with_archived_analytic_account(self):
+        """Ensure that posting an invoice with an archived analytic account
+        in its distribution raises a UserError.
+        """
+        invoice = self.create_invoice(self.partner_a, self.product_a)
+        invoice.invoice_line_ids.analytic_distribution = {
+            str(self.analytic_account_1.id): 100,
+        }
+        # Archive analytic account
+        self.analytic_account_1.active = False
+        with self.assertRaisesRegex(UserError, "archived analytic account"):
+            invoice._post()
+
+    def test_exchange_move_with_mandatory_analytic_plan(self):
+        """ Ensure no mandatory analytic plan validation error is raised when an exchange move is auto-created."""
+
+        # Multi-currency setup
+        test_currency = self.setup_other_currency('CAD', rates=[('2016-01-01', 6.0), ('2017-01-01', 4.0)])
+
+        # Analytic plan setup
+        self.env['account.analytic.applicability'].create({
+            'business_domain': 'general',
+            'applicability': 'mandatory',
+            'analytic_plan_id': self.analytic_plan_2.id,
+        })
+        account_analytic = self.env['account.analytic.account'].search([('plan_id', '=', self.analytic_plan_2.id)], limit=1)
+
+        # Create an invoice in foreign currency
+        invoice = self.env['account.move'].create({
+            'move_type': 'out_invoice',
+            'partner_id': self.partner_a.id,
+            'currency_id': test_currency.id,
+            'invoice_date': '2016-01-01',
+            'invoice_line_ids': [Command.create({
+                'name': 'test line',
+                'quantity': 1,
+                'price_unit': 100,
+                'analytic_distribution': {account_analytic.id: 100},
+            })],
+        })
+        invoice.action_post()
+
+        # Create a credit note at a different rate
+        credit_note = invoice._reverse_moves([{'invoice_date': '2017-01-01'}])
+        # Post the credit note with the validate_analytic context key to mimic posting behavior from the form view.
+        credit_note.with_context(validate_analytic=True).action_post()
+
+        self.assertEqual(credit_note.state, 'posted')

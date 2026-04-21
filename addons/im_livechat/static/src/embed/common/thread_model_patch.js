@@ -80,6 +80,16 @@ patch(Thread.prototype, {
                     : null;
             },
         });
+        this.storeAsActiveVisitorLivechats = fields.One("Store", {
+            /** @this {import("models").Thread} */
+            compute() {
+                return !this.livechat_end_dt &&
+                    (this.self_member_id?.eq(this.livechatVisitorMember) || this.isTransient)
+                    ? this.store
+                    : null;
+            },
+            inverse: "activeVisitorLivechats",
+        });
         this.requested_by_operator = false;
     },
     /** @returns {boolean} */
@@ -168,7 +178,7 @@ patch(Thread.prototype, {
             return text;
         }
         if (this.chatbot.completed) {
-            return _t("This livechat conversation has ended");
+            return _t("This livechat conversation has ended.");
         }
         if (
             this.chatbot.currentStep?.step_type === "question_selection" &&

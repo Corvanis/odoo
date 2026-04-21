@@ -3,7 +3,7 @@ import { MAIN_PLUGINS } from "@html_editor/plugin_sets";
 import { closestElement } from "@html_editor/utils/dom_traversal";
 import { describe, expect, queryAllTexts, test } from "@odoo/hoot";
 import { click, pointerDown, press, tick, waitFor } from "@odoo/hoot-dom";
-import { animationFrame } from "@odoo/hoot-mock";
+import { animationFrame, advanceTime } from "@odoo/hoot-mock";
 import { onRpc } from "@web/../tests/web_test_helpers";
 import { PowerboxPlugin } from "../src/main/powerbox/powerbox_plugin";
 import { setupEditor } from "./_helpers/editor";
@@ -126,15 +126,21 @@ describe("visibility", () => {
         expect(getContent(el)).toBe(
             `<p o-we-hint-text='Type "/" for commands' class="o-we-hint">[]<br></p><p><br></p><p><br></p><p><br></p><p><br></p>`
         );
+        await expectElementCount(".o_we_power_buttons:not(.invisible)", 1);
+        expect(".o_we_power_buttons").toBeVisible();
         await simulateArrowKeyPress(editor, "ArrowDown");
+        await advanceTime(20);
         expect(".o_we_power_buttons").not.toBeVisible();
         await simulateArrowKeyPress(editor, "ArrowDown");
+        await advanceTime(20);
         expect(".o_we_power_buttons").not.toBeVisible();
         await simulateArrowKeyPress(editor, "ArrowDown");
+        await advanceTime(20);
         expect(".o_we_power_buttons").not.toBeVisible();
         await simulateArrowKeyPress(editor, "ArrowDown");
-        await animationFrame();
+        await advanceTime(20);
         await new Promise((resolve) => setTimeout(resolve, 30));
+        await animationFrame();
         expect(".o_we_power_buttons").toBeVisible();
     });
 });

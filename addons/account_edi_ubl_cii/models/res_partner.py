@@ -80,6 +80,7 @@ class ResPartner(models.Model):
             ('9957', "France VAT"),
             ('0225', "France FRCTC Electronic Address"),
             ('0240', "France Register of legal persons"),
+            ('0246', "German Electronic Business Address"),
             ('0204', "Germany Leitweg-ID"),
             ('9930', "Germany VAT"),
             ('9933', "Greece VAT"),
@@ -104,12 +105,14 @@ class ResPartner(models.Model):
             ('0106', "Netherlands KvK"),
             ('0190', "Netherlands OIN"),
             ('9944', "Netherlands VAT"),
+            ('0244', "Nigeria Tax Identification"),
             ('0192', "Norway Org.nr."),
             ('9945', "Poland VAT"),
             ('9946', "Portugal VAT"),
             ('9947', "Romania VAT"),
             ('9948', "Serbia VAT"),
             ('0195', "Singapore UEN"),
+            ('0245', "SK Tax identification number (DIČ)"),
             ('9949', "Slovenia VAT"),
             ('9950', "Slovakia VAT"),
             ('9920', "Spain VAT"),
@@ -202,6 +205,10 @@ class ResPartner(models.Model):
                 formats_info = self._get_ubl_cii_formats_info()
                 return min(formats_by_country, key=lambda e: formats_info[e].get('sequence', 100))  # we use a sequence of 100 by default
         return False
+
+    def _get_ubl_cii_edi_format(self):
+        self.ensure_one()
+        return self.invoice_edi_format or self._get_suggested_ubl_cii_edi_format()
 
     def _get_suggested_peppol_edi_format(self):
         self.ensure_one()

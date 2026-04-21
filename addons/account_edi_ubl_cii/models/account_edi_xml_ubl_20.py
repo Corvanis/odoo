@@ -484,15 +484,27 @@ class AccountEdiXmlUBL20(models.AbstractModel):
             self.add_invoice_line_optional_nodes(line_node, vals, PEPPOL_CREDIT_NOTE_OPTIONAL_LINE_FIELDS)
 
     def add_invoice_line_optional_nodes(self, line_node, vals, optional_line_fields):
-        move_line = self.env['account.move.line'].browse(vals['base_line']['id'])
-        move_line_optional_fields = {key: move_line[key] for key in move_line._fields if key.startswith("x_studio_peppol") and move_line[key] and key in optional_line_fields}
+        base_line = vals['base_line']
+        record = base_line['record']
+        if not isinstance(record, models.Model) or record._name != 'account.move.line':
+            return
+
+        move_line_optional_fields = {
+            key: record[key]
+            for key in record._fields
+            if (
+                key.startswith("x_studio_peppol")
+                and record[key]
+                and key in optional_line_fields
+            )
+        }
         for field in move_line_optional_fields:
             node = line_node
             for tag in optional_line_fields[field]["path"]:
                 if tag not in node:
                     node[tag] = {}
                 node = node[tag]
-            node.update(optional_line_fields[field]["attrs"](move_line))
+            node.update(optional_line_fields[field]["attrs"](record))
 
     # -------------------------------------------------------------------------
     # EXPORT: Generic templates
@@ -578,12 +590,12 @@ class AccountEdiXmlUBL20(models.AbstractModel):
         base_lines_aggregated_tax_details = self.env['account.tax']._aggregate_base_lines_tax_details(vals['base_lines'], non_fixed_total_grouping_function)
         aggregated_tax_details = self.env['account.tax']._aggregate_base_lines_aggregated_values(base_lines_aggregated_tax_details)
         for currency_suffix in ['', '_currency']:
-            vals[f'tax_inclusive_amount{currency_suffix}'] = vals[f'tax_exclusive_amount{currency_suffix}'] \
-                + sum(
+            vals[f'total_tax_amount{currency_suffix}'] = sum(
                     tax_details[f'tax_amount{currency_suffix}']
                     for grouping_key, tax_details in aggregated_tax_details.items()
                     if grouping_key
                 )
+            vals[f'tax_inclusive_amount{currency_suffix}'] = vals[f'tax_exclusive_amount{currency_suffix}'] + vals[f'total_tax_amount{currency_suffix}']
 
         # Cash rounding for 'add_invoice_line' cash rounding strategy
         # (For the 'biggest_tax' strategy the amounts are directly included in the tax amounts.)
@@ -1039,7 +1051,7 @@ class AccountEdiXmlUBL20(models.AbstractModel):
             tax = tax_data['tax']
             allowance_charge_nodes.append({
                 'cbc:ChargeIndicator': {'_text': 'true' if tax_data[f'tax_amount{currency_suffix}'] > 0 else 'false'},
-                'cbc:AllowanceChargeReasonCode': {'_text': 'AEO'},
+                'cbc:AllowanceChargeReasonCode': {'_text': 'AEO' if tax_data[f'tax_amount{currency_suffix}'] > 0 else '100'},
                 'cbc:AllowanceChargeReason': {'_text': tax.name},
                 'cbc:Amount': {
                     '_text': self.format_float(
@@ -1104,10 +1116,12 @@ class AccountEdiXmlUBL20(models.AbstractModel):
         """ Returns a dict of values that will be used to retrieve the partner """
         return {
             'vat': self._find_value(f'.//cac:{role}Party//cbc:CompanyID[string-length(text()) > 5]', tree),
-            'phone': self._find_value(f'.//cac:{role}Party//cac:Contact//cbc:Telephone', tree),
-            'email': self._find_value(f'.//cac:{role}Party//cac:Contact//cbc:ElectronicMail', tree),
-            'name': self._find_value(f'.//cac:{role}Party//cbc:RegistrationName', tree) or
-                    self._find_value(f'.//cac:{role}Party//cac:Contact//cbc:Name', tree),
+            'phone': self._find_value(f'.//cac:{role}Party//cac:Contact/cbc:Telephone', tree),
+            'email': self._find_value(f'.//cac:{role}Party//cac:Contact/cbc:ElectronicMail', tree),
+            'name': self._find_value(f'.//cac:{role}Party//cac:PartyTaxScheme/cbc:RegistrationName', tree) or
+                    self._find_value(f'.//cac:{role}Party//cac:PartyLegalEntity/cbc:RegistrationName', tree) or
+                    self._find_value(f'.//cac:{role}Party//cac:PartyName/cbc:Name', tree) or
+                    self._find_value(f'.//cac:{role}Party//cac:Contact/cbc:Name', tree),
             'postal_address': self._get_postal_address(tree, role),
         }
 
@@ -1260,6 +1274,10 @@ class AccountEdiXmlUBL20(models.AbstractModel):
             if percentage is None:
                 percentage = elem.find('.//{*}Percent')
             amount = elem.find('.//{*}TaxAmount')
+            # When multi-currency invoices have TaxSubtotal in multiple TaxTotal nodes (e.g. JP PINT),
+            # only correct using the document currency's TaxTotal to avoid overwriting with the wrong amount.
+            if amount is not None and amount.get('currencyID') != currency.name:
+                continue
             if (percentage is not None and percentage.text is not None) and (amount is not None and amount.text is not None):
                 tax_percent = float(percentage.text)
                 # Compare the result with our tax total on the invoice, and apply correction if needed.

@@ -70,7 +70,7 @@ export class IconPlugin extends Plugin {
                     if (
                         node.classList?.contains("fa") ||
                         node.parentElement?.classList.contains("fa") ||
-                        (node.querySelector?.(".fa") && node.isContentEditable !== false)
+                        (node.querySelector?.(":scope > .fa") && node.isContentEditable !== false)
                     ) {
                         return true;
                     }

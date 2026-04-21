@@ -18,6 +18,7 @@ class PurchaseOrderLine(models.Model):
 
     name = fields.Text(
         string='Description', required=True, compute='_compute_price_unit_and_date_planned_and_name', store=True, readonly=False)
+    translated_product_name = fields.Text(compute='_compute_translated_product_name')
     sequence = fields.Integer(string='Sequence', default=10)
     product_qty = fields.Float(string='Quantity', digits='Product Unit', required=True)
     product_uom_qty = fields.Float(string='Total Quantity', compute='_compute_product_uom_qty', store=True)
@@ -280,7 +281,7 @@ class PurchaseOrderLine(models.Model):
     @api.depends_context('accrual_entry_date')
     def _compute_amount_to_invoice_at_date(self):
         for line in self:
-            line.amount_to_invoice_at_date = (line.qty_received_at_date - line.qty_invoiced_at_date) * line.price_unit
+            line.amount_to_invoice_at_date = (line.qty_received_at_date - line.qty_invoiced_at_date) * line._get_gross_price_unit()
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -364,7 +365,10 @@ class PurchaseOrderLine(models.Model):
     @api.onchange('product_id')
     def onchange_product_id(self):
         # TODO: Remove when onchanges are replaced with computes
-        if not self.product_id or (self.env.context.get('origin_po_id') and self.product_qty):
+        if not self.product_id:
+            return
+        if self.env.context.get('origin_po_id') and self.product_qty:
+            self._compute_tax_id()
             return
 
         # Reset date, price and quantity since _onchange_quantity will provide default values
@@ -391,7 +395,10 @@ class PurchaseOrderLine(models.Model):
     @api.depends('product_id', 'product_id.uom_id', 'product_id.uom_ids', 'product_id.seller_ids', 'product_id.seller_ids.product_uom_id')
     def _compute_allowed_uom_ids(self):
         for line in self:
-            line.allowed_uom_ids = line.product_id.uom_id | line.product_id.uom_ids | line.product_id.seller_ids.product_uom_id
+            seller_uom = line.product_id.seller_ids.filtered(
+                lambda s: s.product_id.id in {False, line.product_id.id},
+            ).product_uom_id
+            line.allowed_uom_ids = line.product_id.uom_id | line.product_id.uom_ids | seller_uom
 
     @api.depends('product_qty', 'product_uom_id', 'company_id', 'order_id.partner_id')
     def _compute_price_unit_and_date_planned_and_name(self):
@@ -402,6 +409,30 @@ class PurchaseOrderLine(models.Model):
 
             if line.selected_seller_id or not line.date_planned:
                 line.date_planned = line._get_date_planned(line.selected_seller_id).strftime(DEFAULT_SERVER_DATETIME_FORMAT)
+
+            # record product names to avoid resetting custom descriptions
+            default_names = []
+            display_names = []
+            vendors = line.product_id._prepare_sellers(params=params)
+            product_ctx = {'seller_id': None, 'partner_id': None, 'lang': get_lang(line.env, line.partner_id.lang).code}
+            line_without_seller = line.product_id.with_context(product_ctx)
+            default_names.append(line._get_product_purchase_description(line_without_seller))
+            for vendor in vendors:
+                product_ctx = {'seller_id': vendor.id, 'lang': get_lang(line.env, line.partner_id.lang).code}
+                default_names.append(line._get_product_purchase_description(line.product_id.with_context(product_ctx)))
+                display_names.append(line.product_id.with_context(product_ctx).display_name)
+            if not line.name or line.name in default_names:
+                product_ctx = {'seller_id': line.selected_seller_id.id, 'lang': get_lang(line.env, line.partner_id.lang).code}
+                line.name = line._get_product_purchase_description(line.product_id.with_context(product_ctx))
+            else:
+                # Checks that the product vendor and vendor name are correct
+                for vendor, display_name in zip(vendors, display_names):
+                    if line.name.startswith(display_name):
+                        if not line.selected_seller_id:
+                            line.name = line_without_seller.display_name + line.name[len(display_name):]
+                        elif vendor.id != line.selected_seller_id.id:
+                            line.name = display_names[vendors.ids.index(line.selected_seller_id.id)] + line.name[len(display_name):]
+                        break
 
             # If not seller, use the standard price. It needs a proper currency conversion.
             if not line.selected_seller_id:
@@ -435,17 +466,12 @@ class PurchaseOrderLine(models.Model):
                 line.price_unit = line.technical_price_unit = line.selected_seller_id.product_uom_id._compute_price(price_unit, line.product_uom_id)
                 line.discount = line.selected_seller_id.discount or 0.0
 
-            # record product names to avoid resetting custom descriptions
-            default_names = []
-            vendors = line.product_id._prepare_sellers(params=params)
-            product_ctx = {'seller_id': None, 'partner_id': None, 'lang': get_lang(line.env, line.partner_id.lang).code}
-            default_names.append(line._get_product_purchase_description(line.product_id.with_context(product_ctx)))
-            for vendor in vendors:
-                product_ctx = {'seller_id': vendor.id, 'lang': get_lang(line.env, line.partner_id.lang).code}
-                default_names.append(line._get_product_purchase_description(line.product_id.with_context(product_ctx)))
-            if not line.name or line.name in default_names:
-                product_ctx = {'seller_id': line.selected_seller_id.id, 'lang': get_lang(line.env, line.partner_id.lang).code}
-                line.name = line._get_product_purchase_description(line.product_id.with_context(product_ctx))
+    @api.depends('product_id')
+    def _compute_translated_product_name(self):
+        for line in self:
+            line.translated_product_name = line.product_id.with_context(
+                lang=line.partner_id.lang,
+            ).display_name
 
     @api.depends('product_uom_id', 'product_qty', 'product_id.uom_id')
     def _compute_product_uom_qty(self):
@@ -590,6 +616,8 @@ class PurchaseOrderLine(models.Model):
             'purchase_line_id': self.id,
             'is_downpayment': self.is_downpayment,
         }
+        if self.is_downpayment and self.invoice_lines:
+            res['account_id'] = self.invoice_lines.account_id[:1].id
         return res
 
     @api.model

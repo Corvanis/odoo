@@ -35,7 +35,7 @@ msgstr ""
 "Project-Id-Version: Odoo Server 16.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-02-24 14:12+0000\n"
-"PO-Revision-Date: 2026-03-06 17:48+0000\n"
+"PO-Revision-Date: 2026-04-17 06:58+0000\n"
 "Last-Translator: Hanna Kharraziha <hakha@odoo.com>\n"
 "Language-Team: Swedish <https://translate.odoo.com/projects/odoo-19/base/sv/>"
 "\n"
@@ -44,7 +44,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: \n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 5.16.1\n"
+"X-Generator: Weblate 5.16.2\n"
 
 #. module: base
 #: model:ir.module.module,description:base.module_l10n_at_reports
@@ -388,73 +388,72 @@ msgstr ""
 "Lokaliseringsmodul för Dominikanska republiken\n"
 "===========================================\n"
 "\n"
-"Skatte- och redovisningskatalog för Dominikanska republiken, kompatibel för "
-"**Internationalisering** med **IFRS** och anpassad till **IFRS standarder "
-"och regler\n"
-"Internationalisering** med **IFRS** och anpassad till **DGII**:s regler och "
-"förordningar.\n"
-"av Dirección General de Impuestos Internos (**DGII**).\n"
+"Catálogo de Cuentas e Impuestos para República Dominicana, Compatible para\n"
+"**Internacionalización** con **NIIF** y alineado a las normas y "
+"regulaciones\n"
+"de la Dirección General de Impuestos Internos (**DGII**).\n"
 "\n"
-"**Denna modul består av\n"
+"**Este módulo consiste de:**\n"
 "\n"
-"- Standardkontoplan (anpassad till DGII och IFRS)\n"
-"- Skattekatalog med de flesta av skatterna förkonfigurerade\n"
-"        - ITBIS för inköp och försäljning\n"
-"        - ITBIS källskatter\n"
-"        - Innehållen inkomstskatt\n"
-"        - Grupper av skatter och källskatter:\n"
-"                - Telekommunikation\n"
-"                - Leverantörer av byggmaterial\n"
-"                - Enskilda personer som tillhandahåller tjänster\n"
-"        - Övriga skatter\n"
-"- Förkonfigurerade sekvenser för hantering av alla NCF:er\n"
-"        - Fakturor med skattemässigt värde (för försäljning)\n"
-"        - Fakturor för slutkonsumenter\n"
-"        - Debet- och kreditnotor\n"
-"        - Informell registrering av leverantörer\n"
-"        - Register för enstaka poster\n"
-"        - Registrering av mindre utgifter\n"
-"        - Statliga\n"
-"- Skattepositioner för automatisering av skatter och källskatt\n"
-"        - Ändringar från skatt till undantag (t.ex. försäljning till "
-"staten)\n"
-"        - Skatteändringar till källskatt (t.ex. köp av tjänster utomlands)\n"
-"        - Bland annat\n"
+"- Catálogo de Cuentas Estándar (alineado a DGII y NIIF)\n"
+"- Catálogo de Impuestos con la mayoría de Impuestos Preconfigurados\n"
+"        - ITBIS para compras y ventas\n"
+"        - Retenciones de ITBIS\n"
+"        - Retenciones de ISR\n"
+"        - Grupos de Impuestos y Retenciones:\n"
+"                - Telecomunicaiones\n"
+"                - Proveedores de Materiales de Construcción\n"
+"                - Personas Físicas Proveedoras de Servicios\n"
+"        - Otros impuestos\n"
+"- Secuencias Preconfiguradas para manejo de todos los NCF\n"
+"        - Facturas con Valor Fiscal (para Ventas)\n"
+"        - Facturas para Consumidores Finales\n"
+"        - Notas de Débito y Crédito\n"
+"        - Registro de Proveedores Informales\n"
+"        - Registro de Ingreso Único\n"
+"        - Registro de Gastos Menores\n"
+"        - Gubernamentales\n"
+"- Posiciones Fiscales para automatización de impuestos y retenciones\n"
+"        - Cambios de Impuestos a Exenciones (Ej. Ventas al Estado)\n"
+"        - Cambios de Impuestos a Retenciones (Ej. Compra Servicios al "
+"Exterior)\n"
+"        - Entre otros\n"
 "\n"
-"**Notera:**\n"
-"Denna lokalisering har visserligen sekvenserna för NCF, men dessa kan inte "
-"användas\n"
-"utan installation av tredjepartsmoduler eller ytterligare utveckling.\n"
-"ytterligare utveckling.\n"
+"**Nota:**\n"
+"Esta localización, aunque posee las secuencias para NCF, las mismas no "
+"pueden\n"
+"ser utilizadas sin la instalación de módulos de terceros o desarrollo\n"
+"adicional.\n"
 "\n"
-"Kontoplanens kodningsstruktur:\n"
+"Estructura de Codificación del Catálogo de Cuentas:\n"
 "===================================================\n"
 "\n"
-"**En siffra** representerar bokslutets kontokategori/-typ.\n"
-"**1** - Tillgångar **4** - Konton för intäkter och vinster\n"
-"**2** - Skulder **5** - Kostnader, utgifter och förluster\n"
-"**3** - Kapital **6** - Resultaträkningens clearingkonton\n"
+"**Un dígito** representa la categoría/tipo de cuenta del del estado "
+"financiero.\n"
+"**1** - Activo        **4** - Cuentas de Ingresos y Ganancias\n"
+"**2** - Pasivo        **5** - Costos, Gastos y Pérdidas\n"
+"**3** - Capital       **6** - Cuentas Liquidadoras de Resultados\n"
 "\n"
-"**Två siffror** representerar grupperingsposterna:\n"
-"11- Omsättningstillgångar\n"
-"21- Kortfristiga skulder\n"
-"31- Eget kapital\n"
+"**Dos dígitos** representan los rubros de agrupación:\n"
+"11- Activo Corriente\n"
+"21- Pasivo Corriente\n"
+"31- Capital Contable\n"
 "\n"
-"**Fyra siffror** tilldelas kontona i huvudboken: konton i första ordningen\n"
-"1101- Likvida medel och motsvarigheter till likvida medel\n"
-"2101- Leverantörsskulder och kortfristiga skulder\n"
-"3101- Aktiekapital\n"
+"**Cuatro dígitos** se asignan a las cuentas de mayor: cuentas de primer "
+"orden\n"
+"1101- Efectivo y Equivalentes de Efectivo\n"
+"2101- Cuentas y Documentos por pagar\n"
+"3101- Capital Social\n"
 "\n"
-"**Sex siffror** tilldelas underkonton: underbokföringskonton\n"
-"110101 - Kassa\n"
-"210101 - Lokala leverantörer\n"
+"**Seis dígitos** se asignan a las sub-cuentas: cuentas de segundo orden\n"
+"110101 - Caja\n"
+"210101 - Proveedores locales\n"
 "\n"
-"Åtta siffror** är för konton för tredje ordern (de som visas i Odoo): **Åtta "
-"siffror** är för konton för tredje ordern\n"
-"i Odoo):\n"
-"110101- Likvida medel\n"
-"110101- Kassa\n"
-"11010101 Allmän kassa\n"
+"**Ocho dígitos** son para las cuentas de tercer orden (las visualizadas\n"
+"en Odoo):\n"
+"1101- Efectivo y Equivalentes\n"
+"110101- Caja\n"
+"11010101 Caja General\n"
 
 #. module: base
 #. odoo-python
@@ -17304,7 +17303,7 @@ msgstr "Behörighetskontroller"
 #. module: base
 #: model:ir.model,name:base.model_res_groups
 msgid "Access Groups"
-msgstr "Rättighetsgrupper"
+msgstr "Grupper med åtkomstbehörighet"
 
 #. module: base
 #: model:ir.model.fields,field_description:base.field_res_groups__menu_access
@@ -17424,7 +17423,7 @@ msgstr "Kontoinnehavare"
 #. module: base
 #: model:ir.model.fields,field_description:base.field_res_partner_bank__acc_holder_name
 msgid "Account Holder Name"
-msgstr "Kontoinnehavare"
+msgstr "Kontoinnehavares namn"
 
 #. module: base
 #: model:ir.module.module,shortdesc:base.module_account_invoice_extract
@@ -24199,7 +24198,7 @@ msgstr "Komorerna - Redovisningsrapporter"
 #: model_terms:ir.ui.view,arch_db:base.view_res_partner_filter
 #: model_terms:ir.ui.view,arch_db:base.view_users_form
 msgid "Companies"
-msgstr "Bolag"
+msgstr "Företag"
 
 #. module: base
 #. odoo-python
@@ -24220,7 +24219,7 @@ msgstr "Bolag"
 #: model_terms:ir.ui.view,arch_db:base.view_users_search
 #: model_terms:ir.ui.view,arch_db:base.view_users_simple_form
 msgid "Company"
-msgstr "Bolag"
+msgstr "Företag"
 
 #. module: base
 #. odoo-python
@@ -25796,7 +25795,7 @@ msgstr "Smalt tankstreck"
 #. module: base
 #: model:ir.module.category,name:base.module_category_productivity_dashboard
 msgid "Dashboard"
-msgstr "Instrumentpanel"
+msgstr "Anslagstavla"
 
 #. module: base
 #: model:ir.module.module,shortdesc:base.module_board
@@ -26442,7 +26441,7 @@ msgstr "Dirham"
 #. module: base
 #: model_terms:ir.ui.view,arch_db:base.res_lang_tree
 msgid "Disable"
-msgstr "Inaktivera"
+msgstr "Avaktivera"
 
 #. module: base
 #: model:ir.model.fields,field_description:base.field_report_paperformat__disable_shrinking
@@ -30045,7 +30044,7 @@ msgstr "Generell information"
 #: model:ir.ui.menu,name:base.menu_config
 #: model_terms:ir.ui.view,arch_db:base.view_window_action_form
 msgid "General Settings"
-msgstr "Generella inställningar"
+msgstr "Allmänna inställningar"
 
 #. module: base
 #: model:ir.module.module,summary:base.module_l10n_mx_edi_landing
@@ -32177,7 +32176,7 @@ msgstr "Indonesiska försäljningsställen"
 #. module: base
 #: model:ir.actions.act_window,name:base.res_partner_industry_action
 msgid "Industries"
-msgstr "Industrier"
+msgstr "Branscher"
 
 #. module: base
 #: model:ir.model,name:base.model_res_partner_industry
@@ -43234,7 +43233,7 @@ msgstr "Rapport"
 #. module: base
 #: model:ir.model,name:base.model_ir_actions_report
 msgid "Report Action"
-msgstr "Rapportera åtgärder"
+msgstr "Rapporteringsåtgärd"
 
 #. module: base
 #: model:ir.model.fields,field_description:base.field_ir_actions_report__report_file
@@ -43612,7 +43611,7 @@ msgstr "Avrundningsfaktor"
 #. odoo-python
 #: code:addons/base/models/ir_qweb_fields.py:0
 msgid "Rounding precision"
-msgstr "Precision vid avrundning"
+msgstr "Avrundningsprecision"
 
 #. module: base
 #. odoo-python
@@ -45853,7 +45852,7 @@ msgstr "Sportklubb"
 #: model:ir.module.module,summary:base.module_spreadsheet_dashboard_website_sale_slides
 #: model:ir.module.module,summary:base.module_spreadsheet_edition
 msgid "Spreadsheet"
-msgstr "Kalkylblad"
+msgstr "Kalkylark"
 
 #. module: base
 #: model:ir.module.module,shortdesc:base.module_spreadsheet_account
@@ -47238,8 +47237,8 @@ msgid ""
 "The ISO country code in two chars. \n"
 "You can use this field for quick search."
 msgstr ""
-"ISO-landskoden med två tecken\n"
-"Du kan använda det här fältet för snabb sökning."
+"ISO-kod med två tecken.\n"
+"Fältet används för snabbsökning."
 
 #. module: base
 #: model:ir.module.module,description:base.module_l10n_in_hr_holidays
@@ -51151,7 +51150,7 @@ msgstr "URL för webhook"
 #: model_terms:ir.ui.view,arch_db:base.view_partner_address_form
 #: model_terms:ir.ui.view,arch_db:base.view_partner_form
 msgid "Website"
-msgstr "Webbplats"
+msgstr "Hemsida"
 
 #. module: base
 #: model:ir.module.module,shortdesc:base.module_website_appointment_crm
@@ -52782,7 +52781,6 @@ msgstr "andra"
 #. module: base
 #. odoo-python
 #: code:addons/base/models/res_company.py:0
-#, fuzzy
 msgid "parent_id"
 msgstr "parent_id"
 
@@ -52876,7 +52874,7 @@ msgstr "urval_värde"
 #. module: base
 #: model:ir.model.fields.selection,name:base.selection__ir_actions_server__value_field_to_show__sequence_id
 msgid "sequence_id"
-msgstr "sekvens_id"
+msgstr "sequence_id"
 
 #. module: base
 #. odoo-python
@@ -52994,7 +52992,7 @@ msgstr "ta bort länk"
 #. module: base
 #: model:ir.model.fields.selection,name:base.selection__ir_actions_server__value_field_to_show__update_boolean_value
 msgid "update_boolean_value"
-msgstr "uppdatera_boolean_värde"
+msgstr "update_boolean_value"
 
 #. module: base
 #: model:ir.model.fields.selection,name:base.selection__ir_actions_server__value_field_to_show__value

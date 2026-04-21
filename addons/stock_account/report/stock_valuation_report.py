@@ -30,7 +30,7 @@ class StockValuationReport(models.AbstractModel):
         # Check if date is a string instance
         if isinstance(date, str):
             date = fields.Date.from_string(date)
-        if date == fields.Date.today():
+        if date == fields.Date.context_today(self):
             date = False
         if not date:
             inventory_data = company.stock_value()
@@ -47,7 +47,6 @@ class StockValuationReport(models.AbstractModel):
             'value': 0,
             'lines_by_account_id': defaultdict(lambda: {
                 'value': 0,
-                'accounts': [],
             }),
         }
         ending_stock = {
@@ -55,7 +54,6 @@ class StockValuationReport(models.AbstractModel):
             'value': 0,
             'lines_by_account_id': defaultdict(lambda: {
                 'value': 0,
-                'accounts': [],
             }),
         }
 

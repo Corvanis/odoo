@@ -47,7 +47,7 @@ class StockMoveLine(models.Model):
         domain="[('location_id', '=', location_id)]")
     lot_id = fields.Many2one(
         'stock.lot', 'Lot/Serial Number',
-        domain="[('product_id', '=', product_id)]", check_company=True)
+        domain="[('product_id', '=', product_id)]", check_company=True, index=True)
     lot_name = fields.Char('Lot/Serial Number Name')
     result_package_id = fields.Many2one(
         'stock.package', 'Destination Package',
@@ -86,7 +86,7 @@ class StockMoveLine(models.Model):
     is_locked = fields.Boolean(related='move_id.is_locked', readonly=True)
     consume_line_ids = fields.Many2many('stock.move.line', 'stock_move_line_consume_rel', 'consume_line_id', 'produce_line_id')
     produce_line_ids = fields.Many2many('stock.move.line', 'stock_move_line_consume_rel', 'produce_line_id', 'consume_line_id')
-    reference = fields.Char(related='move_id.reference', readonly=False)
+    reference = fields.Char(related='move_id.reference')
     tracking = fields.Selection(related='product_id.tracking', readonly=True)
     origin = fields.Char(related='move_id.origin', string='Source')
     description_picking = fields.Text(related='move_id.description_picking')
@@ -900,7 +900,7 @@ class StockMoveLine(models.Model):
             aggregated_properties = self._get_aggregated_properties(move_line=move_line)
             line_key, uom = aggregated_properties['line_key'], aggregated_properties['product_uom']
             quantity = move_line.product_uom_id._compute_quantity(move_line.quantity, uom)
-            packaging_quantity = move_line.product_uom_id._compute_quantity(quantity, move_line.move_id.packaging_uom_id)
+            packaging_quantity = uom._compute_quantity(quantity, move_line.move_id.packaging_uom_id)
             if line_key not in aggregated_move_lines:
                 qty_ordered = None
                 packaging_qty_ordered = None

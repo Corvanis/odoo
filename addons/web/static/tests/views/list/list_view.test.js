@@ -10024,6 +10024,33 @@ test(`navigation: not moving down with keydown`, async () => {
 });
 
 test.tags("desktop");
+test(`no crash when keydown on x2many "Add a line" cell while record is in edit mode`, async () => {
+    Foo._records[0].o2m = [];
+
+    await mountView({
+        resModel: "foo",
+        type: "form",
+        arch: `
+            <form>
+                <field name="o2m">
+                    <list editable="bottom">
+                        <field name="name"/>
+                    </list>
+                </field>
+            </form>
+        `,
+        resId: 1,
+    });
+
+    await contains(`.o_field_x2many_list_row_add a`).click();
+    expect(`.o_selected_row`).toHaveCount(1);
+
+    await contains(".o_field_x2many_list_row_add a").keyDown("ArrowRight");
+
+    expect(`.o_form_view`).toHaveCount(1);
+});
+
+test.tags("desktop");
 test(`navigation: moving right with keydown from text field does not move the focus`, async () => {
     Foo._fields.foo = fields.Text();
 
@@ -19529,4 +19556,47 @@ test("scroll position is restored when coming back to list view", async () => {
     await animationFrame();
     expect(".o_list_renderer").toHaveCount(1);
     expect(".o_list_view").toHaveProperty("scrollTop", 200);
+});
+
+test.tags("desktop");
+test(`select menu navigation with hot keys`, async () => {
+    Bar._fields.stage = fields.Selection({
+        selection: [
+            ["aab", "aab"],
+            ["aac", "aac"],
+        ],
+    });
+
+    await mountView({
+        resModel: "foo",
+        type: "form",
+        arch: `
+            <form>
+                <field name="o2m">
+                    <list editable="top">
+                        <field name="stage"/>
+                    </list>
+                </field>
+            </form>
+        `,
+        resId: 1,
+    });
+    await contains(".o_field_x2many_list_row_add a").click();
+    await contains(`.o_field_widget[name=o2m] .o_data_row [name=stage] input`).click();
+    await press("Tab");
+    await animationFrame();
+    await press("Enter");
+    await animationFrame();
+
+    await contains(".o_field_x2many_list_row_add a").click();
+    await contains(`.o_field_widget[name=o2m] .o_data_row [name=stage] input`).click();
+    await press("ArrowLeft");
+    await animationFrame();
+    await press("ArrowLeft");
+    await animationFrame();
+    await press("Enter");
+    await animationFrame();
+
+    await contains(`.o_form_button_save`).click();
+    expect(queryAllTexts(`.o_field_x2many_list .o_data_row`)).toEqual(["aab", "aac"]);
 });
