@@ -1,4 +1,4 @@
-Portugal, 2026-04-22
+Portugal, 2026-07-08
 
 Corvanis agrees to the terms of the Odoo Corporate Contributor License
 Agreement v1.0.
@@ -8,9 +8,9 @@ declaration.
 
 Signed,
 
-Vasco Rodrigues vasco@corvanis.com https://github.com/vvro
+Vasco Rodrigues v@vvro.net https://github.com/vvro
 
 List of contributors:
 
+Vasco Rodrigues v@vvro.net https://github.com/vvro
 Vasco Rodrigues vasco@corvanis.com https://github.com/vvro
-copilot-swe-agent[bot] 198982749+Copilot@users.noreply.github.com https://github.com/Copilot
